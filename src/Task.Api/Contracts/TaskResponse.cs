@@ -1,10 +1,14 @@
+using Task.Api.Models;
+
 namespace Task.Api.Contracts;
 
 public sealed record TaskResponse(
-   int Id,
-   string Title,
-   string? Description,
-   bool IsCompleted,
-   DateTime CreatedAt,
-   DateTime? CompletedAt);
-   
+    int Id,
+    int ProjectId,
+    string Title,
+    string? Description,
+    TaskItemStatus Status,
+    DateTime? DueDate,
+    DateTime CreatedAt,
+    DateTime UpdatedAt);
+    
