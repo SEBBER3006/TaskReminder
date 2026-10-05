@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
+using Scalar.AspNetCore;
 using Task.Api.Data;
-
+using Task.Api.Endpoints;
 var builder = WebApplication.CreateBuilder(args);
 
 //Add Health Checks
@@ -14,18 +16,24 @@ builder.Services.AddDbContext<TaskApiDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 var app = builder.Build();
 
-
+// Configure JSON serialization to handle enums as strings
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference(); 
 }
 
 app.UseHttpsRedirection();
 
 // Add health check endpoint
 app.MapHealthChecks("/health");
+// Map the endpoints for tasks and projects
+app.MapTaskEndpoints();
+app.MapProjectEndpoints();
 
 
 app.Run();
