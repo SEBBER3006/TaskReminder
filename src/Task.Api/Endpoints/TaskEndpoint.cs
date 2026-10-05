@@ -31,7 +31,7 @@ public static class TaskEndpoints
             .OrderBy(t => t.Id)                   // Order tasks by Id for consistent results
             // Select only the necessary fields to create TaskResponse objects
             .Select(t => new TaskResponse( 
-                t.Id, t.ProjectId, t.Title, t.Description, (TaskItemStatus)t.Status, t.DueDate, t.CreatedAt, t.UpdatedAt))
+                t.Id, t.ProjectId, t.Title, t.Description, t.Status, t.DueDate, t.CreatedAt, t.UpdatedAt))
             .ToListAsync(ct); // Execute the query asynchronously and return the results as a list
 
         return Results.Ok(tasks); // Return the list of tasks with an HTTP 200 OK response
