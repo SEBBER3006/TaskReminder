@@ -12,13 +12,19 @@ builder.Services.AddHealthChecks();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Add Validation services
+builder.Services.AddValidation();
+
 builder.Services.AddDbContext<TaskApiDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
-var app = builder.Build();
 
 // Configure JSON serialization to handle enums as strings
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
