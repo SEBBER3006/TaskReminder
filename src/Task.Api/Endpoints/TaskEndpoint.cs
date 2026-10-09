@@ -9,15 +9,21 @@ public static class TaskEndpoints
 {
     public static IEndpointRouteBuilder MapTaskEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/projects/{projectId:int}/tasks")
-                       .WithTags("Tasks");
-        
-        group.MapGet("/", GetAllTasks);
-        group.MapGet("/{taskId:int}", GetTaskById);
-        group.MapPost("/", CreateTask);
-        group.MapPut("/{taskId:int}", UpdateTask);
-        group.MapDelete("/{taskId:int}", DeleteTask);
-        return app; 
+        var projectTasks = app.MapGroup("/api/projects/{projectId:int}/tasks")
+                          .WithTags("Tasks");
+
+        projectTasks.MapGet("/", GetAllTasks);
+        projectTasks.MapPost("/", CreateTask);
+
+        // Én bestemt opgave
+        var tasks = app.MapGroup("/api/tasks")
+                    .WithTags("Tasks");
+
+        tasks.MapGet("/{taskId:int}", GetTaskById);
+        tasks.MapPut("/{taskId:int}", UpdateTask);
+        tasks.MapDelete("/{taskId:int}", DeleteTask);
+
+        return app;
     }
 
     private static async Task<IResult> GetAllTasks(int projectId, TaskApiDbContext db, CancellationToken ct)
@@ -37,14 +43,14 @@ public static class TaskEndpoints
         return Results.Ok(tasks); // Return the list of tasks with an HTTP 200 OK response
     }
 
-    private static async Task<IResult> GetTaskById(int projectId, int taskId, TaskApiDbContext db, CancellationToken ct)
+    private static async Task<IResult> GetTaskById(int taskId, TaskApiDbContext db, CancellationToken ct)
     {
-        if (!await ProjectExists(db, projectId, ct))
+        if (!await ProjectExists(db, taskId, ct))
             return Results.NotFound();
 
         var task = await db.TaskItems
             .AsNoTracking()
-            .Where(t => t.ProjectId == projectId && t.Id == taskId)
+            .Where(t => t.Id == taskId) // Filter by taskId
             .Select(t => new TaskResponse(
                 t.Id, t.ProjectId, t.Title, t.Description, t.Status, t.DueDate, t.CreatedAt, t.UpdatedAt))
             .FirstOrDefaultAsync(ct); // Retrieve the first matching task or null if not found
@@ -72,9 +78,9 @@ public static class TaskEndpoints
         return Results.Created($"/api/projects/{projectId}/tasks/{task.Id}", ToResponse(task));
     }
 
-    private static async Task<IResult> UpdateTask(int projectId, int taskId, TaskRequest req, TaskApiDbContext db, CancellationToken ct)
+    private static async Task<IResult> UpdateTask(int taskId, TaskRequest req, TaskApiDbContext db, CancellationToken ct)
     {
-        var task = await db.TaskItems.SingleOrDefaultAsync(t => t.Id == taskId && t.ProjectId == projectId, ct);
+        var task = await db.TaskItems.SingleOrDefaultAsync(t => t.Id == taskId, ct);
         if (task is null)
             return Results.NotFound();
 
@@ -89,9 +95,9 @@ public static class TaskEndpoints
         return Results.Ok(ToResponse(task));
     }
 
-    private static async Task<IResult> DeleteTask(int projectId, int taskId, TaskApiDbContext db, CancellationToken ct)
+    private static async Task<IResult> DeleteTask(int taskId, TaskApiDbContext db, CancellationToken ct)
     {
-        var task = await db.TaskItems.SingleOrDefaultAsync(t => t.Id == taskId && t.ProjectId == projectId, ct);
+        var task = await db.TaskItems.SingleOrDefaultAsync(t => t.Id == taskId, ct);
         if (task is null)
             return Results.NotFound();
 
